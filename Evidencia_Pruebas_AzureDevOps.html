@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Azure DevOps - Test Plans | COJP Guía Práctica 1</title>
+  <style>
+    :root {
+      --az-blue: #0078d4;
+      --az-dark: #1f1f1f;
+      --az-bg: #f8f9fa;
+      --az-card: #ffffff;
+      --az-border: #e1dfdd;
+      --az-text: #201f1e;
+      --az-muted: #605e5c;
+      --az-green: #107c41;
+      --az-green-bg: #dff6dd;
+      --az-gray-bg: #edebe9;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--az-bg);
+      color: var(--az-text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Top Nav */
+    header {
+      background-color: #005a9e;
+      color: white;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .brand svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+
+    .timestamp-box {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ef08b;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+
+    /* Subheader breadcrumbs */
+    .subnav {
+      background-color: #ffffff;
+      border-bottom: 1px solid var(--az-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--az-muted);
+    }
+
+    .breadcrumbs strong {
+      color: var(--az-text);
+    }
+
+    .user-tag {
+      font-size: 13px;
+      background: #f3f2f1;
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid #d2d0ce;
+    }
+
+    /* Layout */
+    .container {
+      display: flex;
+      flex: 1;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: #ffffff;
+      border-right: 1px solid var(--az-border);
+      padding: 20px 16px;
+    }
+
+    .sidebar h3 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--az-muted);
+      margin-bottom: 12px;
+    }
+
+    .suite-btn {
+      width: 100%;
+      text-align: left;
+      padding: 10px 12px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--az-text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      transition: all 0.2s;
+    }
+
+    .suite-btn:hover {
+      background: #f3f2f1;
+    }
+
+    .suite-btn.active {
+      background: #eff6fc;
+      border-color: #c7e0f4;
+      color: var(--az-blue);
+      font-weight: 600;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+
+    .badge-success {
+      background: var(--az-green-bg);
+      color: var(--az-green);
+      border: 1px solid #9fd89f;
+    }
+
+    /* Main Content */
+    .content {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .summary-card {
+      background: white;
+      border: 1px solid var(--az-border);
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .metric-box {
+      border: 1px solid var(--az-border);
+      border-radius: 4px;
+      padding: 12px;
+      background: #faf9f8;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--az-muted);
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .metric-value.green {
+      color: var(--az-green);
+    }
+
+    /* Table */
+    .table-card {
+      background: white;
+      border: 1px solid var(--az-border);
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .table-header-title {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--az-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    thead {
+      background-color: #faf9f8;
+      border-bottom: 1px solid var(--az-border);
+    }
+
+    th {
+      padding: 12px 16px;
+      font-weight: 600;
+      color: var(--az-muted);
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--az-border);
+      vertical-align: middle;
+    }
+
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      background-color: #dff6dd;
+      color: #107c41;
+    }
+
+    .status-icon {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+
+    .print-btn {
+      background: var(--az-blue);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .print-btn:hover {
+      background: #005a9e;
+    }
+
+    @media print {
+      header, .sidebar, .print-btn {
+        display: none !important;
+      }
+      .content {
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header with Azure DevOps Aesthetics -->
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+      <span>Azure DevOps Services &bull; Test Plans</span>
+    </div>
+    <div class="timestamp-box">
+      <div class="live-dot"></div>
+      <span id="currentTimestamp">Cargando fecha y hora...</span>
+    </div>
+  </header>
+
+  <!-- Sub navigation -->
+  <div class="subnav">
+    <div class="breadcrumbs">
+      <span>Organización: <strong>ESFE-Alumnos</strong></span> /
+      <span>Proyecto: <strong>GuiaPractica1-COJP</strong></span> /
+      <strong>Test Plan: Pruebas Unitarias MSTest & xUnit</strong>
+    </div>
+    <div class="user-tag">
+      👤 Estudiante: <strong>Cristian Omar Jordan Perez (COJP)</strong>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Sidebar Test Suites -->
+    <aside class="sidebar">
+      <h3>Test Suites (Solución COJP)</h3>
+      <button class="suite-btn active" onclick="switchSuite('all')">
+        <span>📁 Todas las Pruebas</span>
+        <span class="badge badge-success">29 / 29</span>
+      </button>
+      <button class="suite-btn" onclick="switchSuite('temp')">
+        <span>🌡️ COJP.Temperatura (MSTest)</span>
+        <span class="badge badge-success">10 / 10</span>
+      </button>
+      <button class="suite-btn" onclick="switchSuite('str')">
+        <span>🔤 COJP.Cadenas (xUnit)</span>
+        <span class="badge badge-success">19 / 19</span>
+      </button>
+
+      <div style="margin-top: 30px; padding: 14px; background: #faf9f8; border: 1px solid var(--az-border); border-radius: 4px; font-size: 12px; color: var(--az-muted);">
+        <strong style="color: var(--az-text); display: block; margin-bottom: 6px;">💡 Información de Entrega</strong>
+        Docente: Gerber Alexis Gómez H.<br>
+        Frameworks: MSTest v3 / xUnit v2<br>
+        SDK: .NET 8.0 LTS<br>
+        Estado: 100% Pasadas
+      </div>
+    </aside>
+
+    <!-- Main Content Panel -->
+    <main class="content">
+      <!-- Summary Card -->
+      <div class="summary-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <h1 style="font-size: 20px; font-weight: 600; margin-bottom: 4px;">Ejecución de Pruebas Unitarias - Solución COJP.sln</h1>
+            <p style="font-size: 13px; color: var(--az-muted);">Evidencia de registro de casos de prueba y ejecución exitosa en entorno .NET</p>
+          </div>
+          <button class="print-btn" onclick="window.print()">
+            🖨️ Imprimir / Guardar PDF
+          </button>
+        </div>
+
+        <div class="summary-grid">
+          <div class="metric-box">
+            <div class="metric-label">Total Casos</div>
+            <div class="metric-value">29</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Superadas (Passed)</div>
+            <div class="metric-value green">29 (100%)</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Fallidas (Failed)</div>
+            <div class="metric-value" style="color: #a80000;">0</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Tiempo Total</div>
+            <div class="metric-value" style="font-size: 20px; color: #0078d4;">719 ms</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test Cases Table -->
+      <div class="table-card">
+        <div class="table-header-title">
+          <h2 id="tableTitle" style="font-size: 16px; font-weight: 600;">Casos de Prueba Registrados en Azure DevOps</h2>
+          <span style="font-size: 12px; color: var(--az-muted);">Filtro activo: <strong id="filterName">Todos</strong></span>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Suite</th>
+              <th>Título del Caso de Prueba</th>
+              <th>Framework</th>
+              <th>Método / Regla</th>
+              <th>Resultado</th>
+            </tr>
+          </thead>
+          <tbody id="testTableBody">
+            <!-- MSTest Cases -->
+            <tr data-type="temp">
+              <td><strong>CP-TEMP-01</strong></td>
+              <td>COJP.Temperatura</td>
+              <td>Conversión congelación (0°C &to; 32°F)</td>
+              <td>MSTest</td>
+              <td><code>CelsiusToFahrenheit_FreezingPoint_Returns32</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="temp">
+              <td><strong>CP-TEMP-02</strong></td>
+              <td>COJP.Temperatura</td>
+              <td>Conversión ebullición (100°C &to; 212°F)</td>
+              <td>MSTest</td>
+              <td><code>CelsiusToFahrenheit_BoilingPoint_Returns212</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="temp">
+              <td><strong>CP-TEMP-03</strong></td>
+              <td>COJP.Temperatura</td>
+              <td>Punto de coincidencia (-40°C &to; -40°F)</td>
+              <td>MSTest</td>
+              <td><code>CelsiusToFahrenheit_EqualScalePoint_ReturnsMinus40</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="temp">
+              <td><strong>CP-TEMP-04</strong></td>
+              <td>COJP.Temperatura</td>
+              <td>Temperatura ambiente (25°C &to; 77°F)</td>
+              <td>MSTest</td>
+              <td><code>CelsiusToFahrenheit_RoomTemperature_Returns77</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="temp">
+              <td><strong>CP-TEMP-05</strong></td>
+              <td>COJP.Temperatura</td>
+              <td>Temperatura corporal (37°C &to; 98.6°F)</td>
+              <td>MSTest</td>
+              <td><code>CelsiusToFahrenheit_BodyTemperature_Returns98Point6</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="temp">
+              <td><strong>CP-TEMP-06</strong></td>
+              <td>COJP.Temperatura</td>
+              <td>Inversa congelación (32°F &to; 0°C)</td>
+              <td>MSTest</td>
+              <td><code>FahrenheitToCelsius_FreezingPoint_Returns0</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="temp">
+              <td><strong>CP-TEMP-07</strong></td>
+              <td>COJP.Temperatura</td>
+              <td>Inversa ebullición (212°F &to; 100°C)</td>
+              <td>MSTest</td>
+              <td><code>FahrenheitToCelsius_BoilingPoint_Returns100</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="temp">
+              <td><strong>CP-TEMP-08</strong></td>
+              <td>COJP.Temperatura</td>
+              <td>Inversa coincidencia (-40°F &to; -40°C)</td>
+              <td>MSTest</td>
+              <td><code>FahrenheitToCelsius_EqualScalePoint_ReturnsMinus40</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="temp">
+              <td><strong>CP-TEMP-09</strong></td>
+              <td>COJP.Temperatura</td>
+              <td>Inversa ambiente (77°F &to; 25°C)</td>
+              <td>MSTest</td>
+              <td><code>FahrenheitToCelsius_RoomTemperature_Returns25</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="temp">
+              <td><strong>CP-TEMP-10</strong></td>
+              <td>COJP.Temperatura</td>
+              <td>Inversa corporal (98.6°F &to; 37°C)</td>
+              <td>MSTest</td>
+              <td><code>FahrenheitToCelsius_BodyTemperature_Returns37</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+
+            <!-- xUnit Cases -->
+            <tr data-type="str">
+              <td><strong>CP-CAD-01</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Invertir palabra ("hola" &to; "aloh")</td>
+              <td>xUnit</td>
+              <td><code>ReverseString_SimpleWord_ReturnsReversed</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-02</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Invertir palíndromo ("reconocer")</td>
+              <td>xUnit</td>
+              <td><code>ReverseString_Palindrome_ReturnsSameWord</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-03</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Invertir frase ("Hola Mundo" &to; "odnuM aloH")</td>
+              <td>xUnit</td>
+              <td><code>ReverseString_PhraseWithSpaces_ReturnsReversedPhrase</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-04</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Invertir carácter único ("A" &to; "A")</td>
+              <td>xUnit</td>
+              <td><code>ReverseString_SingleCharacter_ReturnsSameCharacter</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-05</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Invertir cadena vacía ("" &to; "")</td>
+              <td>xUnit</td>
+              <td><code>ReverseString_EmptyString_ReturnsEmptyString</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-06</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Excepción ante valor nulo en inversión</td>
+              <td>xUnit</td>
+              <td><code>ReverseString_NullInput_ThrowsArgumentNullException</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-07</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Remover espacio simple ("Hola Mundo")</td>
+              <td>xUnit</td>
+              <td><code>RemoveSpaces_SingleSpaceBetweenWords_ReturnsCombinedString</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-08</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Remover espacios múltiples y bordes</td>
+              <td>xUnit</td>
+              <td><code>RemoveSpaces_MultipleSpaces_ReturnsStringWithoutSpaces</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-09</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Preservar cadena sin espacios ("CSharp")</td>
+              <td>xUnit</td>
+              <td><code>RemoveSpaces_StringWithoutSpaces_ReturnsOriginalString</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-10</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Cadena con solo espacios ("   " &to; "")</td>
+              <td>xUnit</td>
+              <td><code>RemoveSpaces_OnlySpaces_ReturnsEmptyString</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-11</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Excepción ante valor nulo en espacios</td>
+              <td>xUnit</td>
+              <td><code>RemoveSpaces_NullInput_ThrowsArgumentNullException</code></td>
+              <td><span class="status-pill">✔ Superado</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-12..15</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Pruebas parametrizadas de inversión (4 datos)</td>
+              <td>xUnit Theory</td>
+              <td><code>ReverseString_Theory_ReturnsExpected (InlineData x4)</code></td>
+              <td><span class="status-pill">✔ Superado (4)</span></td>
+            </tr>
+            <tr data-type="str">
+              <td><strong>CP-CAD-16..19</strong></td>
+              <td>COJP.Cadenas</td>
+              <td>Pruebas parametrizadas de espacios (4 datos)</td>
+              <td>xUnit Theory</td>
+              <td><code>RemoveSpaces_Theory_ReturnsExpected (InlineData x4)</code></td>
+              <td><span class="status-pill">✔ Superado (4)</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Live Clock showing Date and Time
+    function updateClock() {
+      const now = new Date();
+      const options = { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        hour12: true 
+      };
+      document.getElementById('currentTimestamp').innerText = now.toLocaleString('es-ES', options);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Filter Test Suites
+    function switchSuite(type) {
+      const buttons = document.querySelectorAll('.suite-btn');
+      buttons.forEach(b => b.classList.remove('active'));
+
+      const rows = document.querySelectorAll('#testTableBody tr');
+      const filterLabel = document.getElementById('filterName');
+
+      if (type === 'all') {
+        buttons[0].classList.add('active');
+        rows.forEach(r => r.style.display = '');
+        filterLabel.innerText = 'Todos (29)';
+      } else if (type === 'temp') {
+        buttons[1].classList.add('active');
+        rows.forEach(r => {
+          r.style.display = r.getAttribute('data-type') === 'temp' ? '' : 'none';
+        });
+        filterLabel.innerText = 'COJP.Temperatura (MSTest - 10)';
+      } else if (type === 'str') {
+        buttons[2].classList.add('active');
+        rows.forEach(r => {
+          r.style.display = r.getAttribute('data-type') === 'str' ? '' : 'none';
+        });
+        filterLabel.innerText = 'COJP.Cadenas (xUnit - 19)';
+      }
+    }
+  </script>
+</body>
+</html>
